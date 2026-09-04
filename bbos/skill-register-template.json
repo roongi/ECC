@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/roongi/ECC/bbos/skill-register-template.json",
+  "title": "BBOS Skill Federation Registration Template",
+  "description": "Template for registering BBOS skills additively with ECC federation. Does not replace existing ECC skills; adds organization-specific skills alongside.",
+  "type": "object",
+  "required": ["schema_version", "federation_id", "skills"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "federation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$",
+      "description": "Unique identifier for this federation (e.g., 'bbos-rongibiotech')"
+    },
+    "organization": {
+      "type": "object",
+      "description": "Organization metadata (optional)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Human-readable organization name"
+        },
+        "repo_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the organization's private OS repo (for reference only)"
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Skills to register with ECC federation",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "description": "Unique skill identifier within this federation"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Human-readable skill name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Brief description of what the skill does"
+          },
+          "source": {
+            "type": "object",
+            "required": ["type"],
+            "description": "Skill source location",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["local", "remote", "inline"],
+                "description": "Source type: local file path, remote URL, or inline content"
+              },
+              "path": {
+                "type": "string",
+                "description": "Local path to SKILL.md (relative to federation root)"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Remote URL to fetch SKILL.md from"
+              },
+              "content": {
+                "type": "string",
+                "description": "Inline SKILL.md content (for simple skills)"
+              }
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["claude", "cursor", "codex", "hermes", "opencode", "kiro", "all"]
+            },
+            "default": ["all"],
+            "description": "Target harnesses for this skill"
+          },
+          "activation": {
+            "type": "object",
+            "description": "Activation conditions",
+            "properties": {
+              "auto": {
+                "type": "boolean",
+                "default": false,
+                "description": "Auto-activate based on context matching"
+              },
+              "keywords": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Keywords that trigger skill suggestion"
+              },
+              "file_patterns": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "File glob patterns that activate the skill"
+              }
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "ECC skill IDs this skill depends on"
+          },
+          "conflicts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "ECC skill IDs this skill conflicts with (mutual exclusion)"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata",
+            "properties": {
+              "version": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                "description": "Skill version (semver)"
+              },
+              "author": {
+                "type": "string",
+                "description": "Skill author"
+              },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Categorization tags"
+              },
+              "origin": {
+                "type": "string",
+                "description": "Origin identifier (e.g., 'BBOS', 'ECC', 'RongiBiotech')"
+              }
+            }
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "description": "Agents to register with ECC federation (optional)",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "source"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "source": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string", "enum": ["local", "remote", "inline"] },
+              "path": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "content": { "type": "string" }
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["all"]
+          }
+        }
+      }
+    },
+    "memory_bridge": {
+      "type": "object",
+      "description": "Memory Vault integration settings",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Memory Vault integration"
+        },
+        "scope_prefix": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,31}$",
+          "description": "Prefix for memory entries from this federation"
+        },
+        "allowed_harnesses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Harnesses allowed to read/write federation memories"
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "description": "Governance event forwarding settings",
+      "properties": {
+        "capture_events": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture governance events from federation skills"
+        },
+        "event_sink": {
+          "type": "string",
+          "description": "Path or URL for governance event forwarding"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "federation_id": "bbos-rongibiotech",
+      "organization": {
+        "name": "RongiBiotech",
+        "repo_url": "https://github.com/roongi/bbos-private"
+      },
+      "skills": [
+        {
+          "id": "biotech-data-pipeline",
+          "name": "Biotech Data Pipeline",
+          "description": "Domain-specific data pipeline patterns for biotech workflows",
+          "source": {
+            "type": "local",
+            "path": "skills/biotech-data-pipeline/SKILL.md"
+          },
+          "targets": ["claude", "cursor", "hermes"],
+          "activation": {
+            "auto": true,
+            "keywords": ["biotech", "pipeline", "data processing"],
+            "file_patterns": ["**/pipelines/**", "**/data/**/*.py"]
+          },
+          "dependencies": ["backend-patterns", "api-design"],
+          "metadata": {
+            "version": "1.0.0",
+            "author": "RongiBiotech",
+            "tags": ["biotech", "data", "pipeline"],
+            "origin": "BBOS"
+          }
+        },
+        {
+          "id": "compliance-review",
+          "name": "Regulatory Compliance Review",
+          "description": "FDA/EMA compliance review patterns for biotech software",
+          "source": {
+            "type": "local",
+            "path": "skills/compliance-review/SKILL.md"
+          },
+          "targets": ["all"],
+          "activation": {
+            "auto": false,
+            "keywords": ["compliance", "FDA", "EMA", "regulatory"]
+          },
+          "metadata": {
+            "version": "1.0.0",
+            "origin": "BBOS"
+          }
+        }
+      ],
+      "memory_bridge": {
+        "enabled": true,
+        "scope_prefix": "bbos-rb",
+        "allowed_harnesses": ["claude", "cursor", "hermes"]
+      },
+      "governance": {
+        "capture_events": true,
+        "event_sink": "~/.bbos/governance/events.jsonl"
+      }
+    }
+  ]
+}
